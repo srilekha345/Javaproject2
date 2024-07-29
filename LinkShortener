@@ -1,0 +1,112 @@
+// LinkShortener.java
+import java.util.HashMap;
+import java.util.Random;
+
+class LinkShortener {
+    private HashMap<String, String> shortToLongMap;
+    private HashMap<String, String> longToShortMap;
+    private static final String CHAR_POOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int SHORT_URL_LENGTH = 6;
+    private Random random;
+
+    public LinkShortener() {
+        shortToLongMap = new HashMap<>();
+        longToShortMap = new HashMap<>();
+        random = new Random();
+    }
+
+    public String shortenURL(String longURL) {
+        if (longToShortMap.containsKey(longURL)) {
+            return longToShortMap.get(longURL);
+        }
+
+        String shortURL;
+        do {
+            shortURL = generateShortURL();
+        } while (shortToLongMap.containsKey(shortURL));
+
+        shortToLongMap.put(shortURL, longURL);
+        longToShortMap.put(longURL, shortURL);
+        return shortURL;
+    }
+
+    public String expandURL(String shortURL) {
+        return shortToLongMap.getOrDefault(shortURL, "Invalid short URL");
+    }
+
+    private String generateShortURL() {
+        StringBuilder shortURL = new StringBuilder(SHORT_URL_LENGTH);
+        for (int i = 0; i < SHORT_URL_LENGTH; i++) {
+            shortURL.append(CHAR_POOL.charAt(random.nextInt(CHAR_POOL.length())));
+        }
+        return shortURL.toString();
+    }
+}
+
+// Main.java
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        LinkShortener linkShortener = new LinkShortener();
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("Options: 1. Shorten URL 2. Expand URL 3. Exit");
+            int choice = scanner.nextInt();
+            scanner.nextLine();  // Consume newline
+
+            switch (choice) {
+                case 1:
+                    System.out.println("Enter long URL:");
+                    String longURL = scanner.nextLine();
+                    String shortURL = linkShortener.shortenURL(longURL);
+                    System.out.println("Short URL: " + shortURL);
+                    break;
+                case 2:
+                    System.out.println("Enter short URL:");
+                    String shortURL = scanner.nextLine();
+                    longURL = linkShortener.expandURL(shortURL);
+                    System.out.println("Long URL: " + longURL);
+                    break;
+                case 3:
+                    scanner.close();
+                    System.exit(0);
+                default:
+                    System.out.println("Invalid option. Please try again.");
+            }
+        }
+    }
+}
+
+// LinkShortenerTest.java
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class LinkShortenerTest {
+    @Test
+    public void testShortenAndExpandURL() {
+        LinkShortener linkShortener = new LinkShortener();
+        String longURL = "https://www.example.com";
+        String shortURL = linkShortener.shortenURL(longURL);
+
+        assertNotNull(shortURL);
+        assertEquals(longURL, linkShortener.expandURL(shortURL));
+    }
+
+    @Test
+    public void testDuplicateLongURL() {
+        LinkShortener linkShortener = new LinkShortener();
+        String longURL = "https://www.example.com";
+        String shortURL1 = linkShortener.shortenURL(longURL);
+        String shortURL2 = linkShortener.shortenURL(longURL);
+
+        assertEquals(shortURL1, shortURL2);
+    }
+
+    @Test
+    public void testInvalidShortURL() {
+        LinkShortener linkShortener = new LinkShortener();
+        assertEquals("Invalid short URL", linkShortener.expandURL("invalid"));
+    }
+}
